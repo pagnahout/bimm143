@@ -1,0 +1,258 @@
+---
+title: "Class 7: Machine Learning"
+author: Pagna Hout
+date: 2023-04-26
+format: pdf
+---
+
+## Example of K-means clustering
+
+First step is to make up some data with a known structure, so we know what the answer should be.
+
+```{r}
+tmp <- c(rnorm (30, mean = -3), rnorm (30, mean = 3))
+x <- cbind(x = tmp, y = rev(tmp))
+plot(x)
+```
+
+Now we have some structured data in x. Let's see if k-means is able to identify the two groups.
+
+```{r}
+k <- kmeans (x, centers = 2, nstart = 20)
+k
+```
+
+Let's explore k:
+
+```{r}
+k$centers
+```
+
+Adding colors to each clusters:
+
+```{r}
+plot(x, col = k$cluster)
+```
+
+Adding the clusters centers:
+
+```{r}
+plot(x, col = k$cluster)
+points(k$centers, col = 'blue', pch = 15)
+```
+
+## Example of Hierarchical Clustering
+
+Let's use the same data as before, which we stored in 'x'. We will use the 'hclust()' function.
+
+```{r}
+clustering <- hclust(dist(x))
+clustering
+```
+
+```{r}
+plot(clustering)
+```
+
+Let's add an horizontal line.
+
+```{r}
+plot(clustering)
+abline(h = 10, col = 'pink')
+```
+
+To get our results (i.e., membership vector), we need to cut the tree. The function for doing that is cutree().
+
+```{r}
+subgroups <- cutree(clustering, h=10)
+subgroups
+```
+
+Plotting this...
+
+```{r}
+plot(x, col = subgroups)
+```
+
+You can also "cut" your tree with a number of clusters you want:
+
+```{r}
+cutree(clustering, k = 2)
+```
+
+# Principle Component Analysis (PCA)
+
+## PCA of UK Food
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url, row.names = 1)
+head(x)
+```
+
+Now we can generate some basic visualizations.
+
+```{r}
+barplot(as.matrix(x), col = rainbow(nrow(x)))
+```
+
+Refining our barplot:
+
+```{r}
+barplot(as.matrix(x), col = rainbow(nrow(x)), beside=T)
+```
+
+Other visualizations that can be useful...
+
+```{r}
+pairs(x, col = rainbow(nrow(x)), pch = 16 )
+```
+
+Applying PCA... using the command "prcomp()". This function expects the transpose of our data (flipping rows and columns).
+
+```{r}
+#transpose_matrix <- t(x)
+#pca <- prcomp(transpose_matrix)
+
+#combining the two lines to make the code shorter
+pca <- prcomp(t(x))
+summary(pca)
+```
+
+Let's plot the PCA results.
+
+```{r}
+plot(pca)
+```
+
+We need to access the results of the PCA analysis:
+
+```{r}
+attributes(pca)
+```
+
+We can explore the pca\$x dataframe
+
+```{r}
+pca$x
+```
+
+Plotting:
+
+```{r}
+plot( x = pca$x[,1], y = pca$x[,2] )
+```
+
+Adding colors and labels...
+
+```{r}
+plot( x = pca$x[,1], y = pca$x[,2] )
+colors_countries <- c('orange', 'pink', 'blue', 'green')
+text( x = pca$x[,1], y = pca$x[,2], colnames(x), col = colors_countries )
+```
+
+```{r}
+## Lets focus on PC1 as it accounts for > 90% of variance 
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,1], las=2 )
+```
+
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,2], las=2 )
+```
+
+# PCA of RNA-seq data
+
+Loading the data...
+
+```{r}
+url2 <- "https://tinyurl.com/expression-CSV"
+rna.data <- read.csv(url2, row.names=1)
+```
+
+**Q10**: How many genes and samples are in this data set?
+
+```{r}
+dim(rna.data)
+```
+
+Answer: There are 100 genes and 10 samples.
+
+Applying PCA...
+
+```{r}
+pca_rna = prcomp(t(rna.data))
+summary(pca_rna)
+```
+
+Plotting principle components 1 and 2.
+
+```{r}
+plot(pca_rna$x[,1], pca_rna$x[,2], xlab='PC1', ylab='PC2')
+```
+
+```{r}
+#colnames(rna.data)
+cols_samples <- c(rep('blue', 5), rep('red', 5))
+cols_samples
+
+#using cols_samples to plot
+plot(pca_rna$x[,1], pca_rna$x[,2], xlab='PC1', ylab='PC2', col = cols_samples )
+```
+
+```{r}
+barplot( pca_rna$rotation[,1])
+```
+
+```{r}
+sort (pca_rna$rotation[,1])
+```
+
+### Questions
+
+**Q1**. How many rows and columns are in your new data frame named `x`? What R functions could you use to answer this questions?
+
+There are 17 rows and 4 columns in the new data frame named x.
+
+R function used: dim(x)
+
+**Q2.** Which approach to solving the \'row-names problem\' mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+
+I prefer the row.names =1 better because it gives a straightforward direction as to putting column #1 as the name of the row. I think this approach is better than the other one because if we replace x to another value than the x from before would be replaced.
+
+**Q3**: Changing what optional argument in the above **barplot()** function results in the following plot?
+
+Adding beside=T in the barplot() function.
+
+**Q5**: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+
+The code displays a matrix of scatterplots. The diagonal shows the names of the variables of the data. The points in the scatterplot represents the differences or similarities between the two compared variables. If a given point lies on the diagonal, it means that the two variables are correlated.
+
+**Q6**. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+
+Based on the data set, people in Northern Ireland eat more fresh potatoes than other countries of the UK, and there is a lower amount of people who consume alcoholic drinks.
+
+**Q7**. Complete the code below to generate a plot of PC1 vs PC2. The second line adds text labels over the data points.
+
+```         
+# Plot PC1 vs PC2
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2], colnames(x))
+```
+
+**Q8.** Customize your plot so that the colors of the country names match the colors in our UK and Ireland map and table at start of this document.
+
+plot( x = pca\$x\[,1\], y = pca\$x\[,2\] )
+
+colors_countries \<- c('orange', 'pink', 'blue', 'green')
+
+text( x = pca\$x\[,1\], y = pca\$x\[,2\], colnames(x), col = colors_countries )
+
+**Q9**: Generate a similar \'loadings plot\' for PC2. What two food groups feature prominantely and what does PC2 maninly tell us about?
+
+PC2 mainly tell us about the second most variation in the data. The two food groups are fresh potatoes and soft drinks.
+
+**Q10**: How many genes and samples are in this data set?
+
+There are 100 genes and 10 samples in this data set.
